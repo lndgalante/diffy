@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
-import { Pane, Heading, Paragraph, TextInputField, FilePicker } from 'evergreen-ui'
+import { Heading, TextInputField, FilePicker, toaster } from 'evergreen-ui'
 import { string, object, mixed } from 'yup'
 import Router from 'next/router'
 
@@ -28,8 +28,16 @@ const validationSchema = object().shape({
 })
 
 const handleValidations = async (url, file) => {
-  const isUrlValid = await validationSchema.isValid({ url, file })
-  if (isUrlValid) Router.push('/processing')
+  const hasntUrlAndFile = !url || !file
+  if (hasntUrlAndFile) return
+
+  try {
+    const isUrlValid = await validationSchema.validate({ url, file })
+    if (isUrlValid) Router.push('/processing')
+  } catch (error) {
+    const { message } = error
+    toaster.warning(message)
+  }
 }
 
 const Form = () => {
