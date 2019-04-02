@@ -6,8 +6,8 @@ class MyDocument extends Document {
   static getInitialProps({ renderPage }) {
     const sheet = new ServerStyleSheet()
     const page = renderPage(App => props => sheet.collectStyles(<App {...props} />))
-    const styleTags = sheet.getStyleElement()
 
+    const styleTags = sheet.getStyleElement()
     const { css, hydrationScript } = extractStyles()
 
     return { ...page, css, hydrationScript, styleTags }
