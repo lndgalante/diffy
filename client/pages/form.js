@@ -1,57 +1,88 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
+import { Heading, TextInputField, FilePicker, Text, toaster } from 'evergreen-ui'
 import Router from 'next/router'
-import styled from 'styled-components'
-import { Heading, TextInputField, FilePicker, toaster } from 'evergreen-ui'
 
 import Grid from '../components/Layout/Grid'
+import { filestackClient } from '../utils/filestack'
 import { validationSchema } from '../utils/validations'
 
-const handleValidations = async (url, file) => {
-  const hasntUrlOrFile = !url || !file
-  if (hasntUrlOrFile) return
-
+const handleValidations = async ({ clientUrl, file }) => {
   try {
-    const isUrlValid = await validationSchema.validate({ url, file })
-    if (isUrlValid) Router.push('/processing')
+    const isSchemaValid = await validationSchema.validate({ clientUrl, file })
+    return isSchemaValid
   } catch (error) {
     const { message } = error
     toaster.warning(message)
   }
 }
 
+const handleUploadFile = async ({ file }) => {
+  try {
+    const { url } = await filestackClient.upload(file)
+    return url
+  } catch (error) {
+    toaster.warning(error.toString())
+  }
+}
+
+const handleSendAssets = async ({ clientUrl, fileUrl }) => {
+  try {
+    const response = await fetch('http://localhost:8080/api', {
+      method: 'POST',
+      body: JSON.stringify({ clientUrl, fileUrl }),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    })
+    const message = await response.json()
+    return message
+  } catch (error) {}
+}
+
+const onDidMount = async ({ clientUrl, file }) => {
+  const hasClientUrlOrFile = clientUrl && file
+  if (!hasClientUrlOrFile) return
+
+  const isSchemaValid = await handleValidations({ clientUrl, file })
+  if (!isSchemaValid) return
+
+  Router.push('/processing')
+
+  /*
+    TODO: In Processing page we need to do the following steps:
+      1 - Show message that file is being uploaded and sending to server
+      2 - Connect through WebSockets using Socket.io to receive first message "We are processing files"
+      3 - When final message / step is received move to /results and display a 4x4 grid with different diffings
+  */
+
+  const fileUrl = await handleUploadFile({ file })
+  const message = await handleSendAssets({ clientUrl, fileUrl })
+}
+
 const Form = () => {
-  const fileElement = useRef(null)
-  const [url, setUrl] = useState('')
   const [file, setFile] = useState()
+  const [clientUrl, setClientUrl] = useState('')
 
   useEffect(() => {
-    handleValidations(url, file)
-  }, [url, file])
+    onDidMount({ clientUrl, file })
+  }, [clientUrl, file])
 
-  const handleChangeUrl = ({ target }) => setUrl(target.value)
   const handleChangeFile = ([file]) => setFile(file)
-
-  const handleKeyPress = ({ key }) => {
-    if (key !== 'Enter' || !fileElement.current) return
-    fileElement.current.fileInput.click()
-  }
+  const handleChangeUrl = ({ target: { value } }) => setClientUrl(value)
 
   return (
-    <Grid>
+    <Grid columns="400px">
       <div>
         <Heading size={800} marginTop={10} is="h2" color="white">
           Share your assets
         </Heading>
         <TextInputField
-          value={url}
           marginTop={15}
+          value={clientUrl}
           inputHeight={40}
-          onKeyPress={handleKeyPress}
           onChange={handleChangeUrl}
-          label="Insert your website url"
+          label="Insert your client url"
           placeholder="https://duckduckgo.com"
         />
-        <FilePicker ref={fileElement} height={40} onChange={handleChangeFile} />
+        <FilePicker height={40} onChange={handleChangeFile} />
       </div>
     </Grid>
   )

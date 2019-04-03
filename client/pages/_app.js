@@ -10,7 +10,7 @@ class NextApp extends App {
 
     if (Component.getInitialProps) pageProps = await Component.getInitialProps(ctx)
 
-    return { pageProps, router }
+    return { pageProps }
   }
 
   render() {

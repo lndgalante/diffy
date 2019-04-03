@@ -5,7 +5,7 @@ const Grid = styled.div`
   height: 100vh;
   display: grid;
   align-content: center;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: ${({ columns }) => columns};
 
   > div {
     align-self: center;

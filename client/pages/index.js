@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import styled from 'styled-components'
-import { Pane, Heading, Paragraph, Button } from 'evergreen-ui'
+import { Heading, Paragraph, Button } from 'evergreen-ui'
 
 import Grid from '../components/Layout/Grid'
 
 const Home = () => (
-  <Grid>
+  <Grid columns="1fr 1fr">
     <div>
       <Heading size={900} is="h1" color="white">
         Diffy

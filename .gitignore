@@ -2,3 +2,5 @@ node_modules
 yarn.lock
 .next
 .DS_Store
+.env
+*.png
